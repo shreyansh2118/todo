@@ -1,16 +1,19 @@
-# todo
+# Advanced todo App
 
-A new Flutter project.
+
+
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+A new Flutter App having fetures like
+1) The app should allow users to create, edit, and delete tasks.
+2) Each task should have a title, description, priority level, and due date.
+3) Users should be able to prioritise their tasks by setting a priority level.
+4) The app should have a feature to set reminders for tasks that are due soon.
+5) App should push notifications based on expiration of the tasks
+6) The app should be able to sort the tasks based on priority, due date, or creation date.
+7) The app should have a search feature that allows users to search for specific tasks by title or keyword.
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+https://github.com/user-attachments/assets/223be8fd-3503-4b07-a1a3-6a156eb39567
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
