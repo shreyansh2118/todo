@@ -2,20 +2,6 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:todo/homepage.dart';
 
-
-// void main() {
-//   AwesomeNotifications().initialize(
-//     null,
-//     [
-//       NotificationChannel(
-//           channelKey: "basic_channel",
-//           channelName: 'Basic notification',
-//           channelDescription: "channelDescription")
-//     ],
-//     debug: true,
-//   );
-//   runApp(const MyApp());
-// }
 void main() {
   // Initialize awesome_notifications
   AwesomeNotifications().initialize(
@@ -42,12 +28,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
