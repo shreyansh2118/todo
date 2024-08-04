@@ -34,7 +34,7 @@ class Todo {
   }
 
   static List<Todo> todolist() {
-    // Sample data
+    // Sample data for development/testing
     return [
       Todo(
         id: '3',

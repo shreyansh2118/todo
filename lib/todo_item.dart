@@ -26,13 +26,19 @@ class _TodoItemsState extends State<TodoItems> {
   @override
   void initState() {
     super.initState();
-    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
-      if (!isAllowed) {
-        AwesomeNotifications().requestPermissionToSendNotifications();
-      }
-    });
 
-    tz.initializeTimeZones(); // Initialize timezone data
+    // Initialize timezone data
+    tz.initializeTimeZones();
+
+    // Check and request notification permission
+    _checkNotificationPermission();
+  }
+
+  Future<void> _checkNotificationPermission() async {
+    bool isAllowed = await AwesomeNotifications().isNotificationAllowed();
+    if (!isAllowed) {
+      await AwesomeNotifications().requestPermissionToSendNotifications();
+    }
   }
 
   // Get priority color

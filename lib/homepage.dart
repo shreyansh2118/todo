@@ -1,95 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:todo/controller/controller.dart';
 import 'package:todo/model/todo.dart';
 import 'package:todo/todo_item.dart';
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class MyHomePage extends StatelessWidget {
+  MyHomePage({super.key});
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final List<Todo> todoList = Todo.todolist();
-  final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _textinput = TextEditingController();
-  final TextEditingController _titleinput = TextEditingController();
-
-  String _searchTerm = '';
-  String _sortCriterion = 'Date'; // Default sort criterion
-
-  // Define the priority levels with numerical values for sorting
-  final Map<String, int> _priorityLevels = {
-    'Very Urgent': 0,
-    'Urgent': 1,
-    'Normal': 2,
-  };
-
-  void _handleTodoCheckBox(Todo todo) {
-    setState(() {
-      // Update `isdone` using `copyWith` to create a new Todo object
-      final updatedTodo = todo.copyWith(isdone: !todo.isdone);
-      final index = todoList.indexOf(todo);
-      if (index != -1) {
-        todoList[index] = updatedTodo;
-      }
-    });
-  }
-
-  void _deleteTodo(String id) {
-    setState(() {
-      todoList.removeWhere((item) => item.id == id);
-    });
-  }
-
-  void _add(String description, String title) {
-    setState(() {
-      todoList.add(Todo(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        description: description,
-        title: title,
-        isdone: false,
-        priority: 'Normal', // Default value for priority
-        date: DateTime.now(), // Add a date field to your Todo model
-      ));
-    });
-    _textinput.clear();
-    _titleinput.clear();
-  }
-
-  void _updateSearchTerm(String term) {
-    setState(() {
-      _searchTerm = term;
-    });
-  }
-
-  void _sortTodos(String criterion) {
-    setState(() {
-      _sortCriterion = criterion;
-      if (criterion == 'Date') {
-        todoList.sort((a, b) => b.date.compareTo(a.date)); // Sort by date
-      } else if (criterion == 'Priority') {
-        // Sort by priority using the defined priority levels
-        todoList.sort((a, b) => _priorityLevels[a.priority]!.compareTo(_priorityLevels[b.priority]!));
-      }
-    });
-  }
-
-  List<Todo> get _filteredAndSortedTodos {
-    List<Todo> filteredTodos = todoList
-        .where((todo) =>
-            todo.title.toLowerCase().contains(_searchTerm.toLowerCase()) ||
-            todo.description.toLowerCase().contains(_searchTerm.toLowerCase()))
-        .toList();
-
-    if (_sortCriterion == 'Date') {
-      filteredTodos.sort((a, b) => b.date.compareTo(a.date));
-    } else if (_sortCriterion == 'Priority') {
-      filteredTodos.sort((a, b) => _priorityLevels[a.priority]!.compareTo(_priorityLevels[b.priority]!));
-    }
-
-    return filteredTodos;
-  }
+  final TodoController controller =
+      Get.put(TodoController()); // Ensure controller is initialized
 
   @override
   Widget build(BuildContext context) {
@@ -103,11 +22,10 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.only(left:8.0,right: 8),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _search(),
+            _search(), // Make sure this is wrapped in Obx if it uses observable values
             const SizedBox(height: 20),
             Row(
               children: [
@@ -117,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 const Spacer(),
                 DropdownButton<String>(
-                  value: _sortCriterion,
+                  value: controller.sortCriterion.value,
                   items: ['Date', 'Priority'].map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
@@ -126,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   }).toList(),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
-                      _sortTodos(newValue);
+                      controller.sortTodos(newValue);
                     }
                   },
                 ),
@@ -137,27 +55,31 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
             const SizedBox(height: 15),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _filteredAndSortedTodos.length,
-                itemBuilder: (context, index) {
-                  final todo = _filteredAndSortedTodos[index];
-                  return TodoItems(
-                    todo: todo,
-                    handleTodoCheckBox: _handleTodoCheckBox,
-                    onDelete: _deleteTodo,
-                    onEdit: (Todo updatedTodo) {
-                      setState(() {
-                        final index = todoList.indexOf(todo);
-                        if (index != -1) {
-                          todoList[index] = updatedTodo;
-                        }
-                      });
-                    },
-                  );
-                },
-              ),
-            ),
+            Obx(() {
+              final todos = controller.filteredAndSortedTodos;
+              print('Todos Length: ${todos.length}'); // Debug line
+        
+              if (todos.isEmpty) {
+                return Center(child: Text("No TODOs found."));
+              }
+        
+              return Expanded(
+                child: ListView.builder(
+                  itemCount: todos.length,
+                  itemBuilder: (context, index) {
+                    final todo = todos[index];
+                    return TodoItems(
+                      todo: todo,
+                      handleTodoCheckBox: controller.handleTodoCheckBox,
+                      onDelete: controller.deleteTodo,
+                      onEdit: (Todo updatedTodo) {
+                        controller.updateTodo(todo, updatedTodo);
+                      },
+                    );
+                  },
+                ),
+              );
+            }),
           ],
         ),
       ),
@@ -168,8 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
-        controller: _searchController,
-        onChanged: _updateSearchTerm,
+        onChanged: controller.updateSearchTerm,
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
@@ -186,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  showAddTodoDialog(BuildContext context) {
+  void showAddTodoDialog(BuildContext context) {
     final TextEditingController _titleController = TextEditingController();
     final TextEditingController _descriptionController =
         TextEditingController();
@@ -226,8 +147,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                   ),
-                  items: ['Very Urgent', 'Urgent', 'Normal']
-                      .map((String value) {
+                  items:
+                      ['Very Urgent', 'Urgent', 'Normal'].map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(value),
@@ -235,9 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   }).toList(),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
-                      setState(() {
-                        _priority = newValue;
-                      });
+                      _priority = newValue;
                     }
                   },
                 ),
@@ -251,15 +170,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 final description = _descriptionController.text.trim();
 
                 if (title.isNotEmpty && description.isNotEmpty) {
-                  todoList.add(Todo(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    description: description,
-                    title: title,
-                    isdone: false,
-                    priority: _priority, // Use selected priority
-                    date: DateTime.now(), // Add a date field to your Todo model
-                  ));
-                  _sortTodos(_sortCriterion); // Re-sort the list after adding
+                  controller.add(description, title, _priority);
                 }
                 Navigator.of(context).pop(); // Close the dialog
               },
